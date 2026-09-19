@@ -397,3 +397,20 @@ def test_recursive_exception() -> None:
             console.print_exception(show_locals=True)
 
     bar()
+
+
+def test_import_cwd_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    import os
+    import importlib
+    import rich
+
+    def raise_permission_error() -> str:
+        raise PermissionError("Permission denied")
+
+    monkeypatch.setattr(os, "getcwd", raise_permission_error)
+    importlib.reload(rich)
+    assert rich._IMPORT_CWD == ""
+
+    monkeypatch.undo()
+    importlib.reload(rich)
+    assert rich._IMPORT_CWD != ""

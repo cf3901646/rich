@@ -2237,9 +2237,14 @@ class Console:
                 Defaults to ``False``.
 
         """
-        text = self.export_text(clear=clear, styles=styles)
+        with self._record_buffer_lock:
+            buffer_length = len(self._record_buffer)
+            text = self.export_text(clear=False, styles=styles)
         with open(path, "w", encoding="utf-8") as write_file:
             write_file.write(text)
+        if clear:
+            with self._record_buffer_lock:
+                del self._record_buffer[:buffer_length]
 
     def export_html(
         self,
@@ -2340,14 +2345,19 @@ class Console:
                 Defaults to False.
 
         """
-        html = self.export_html(
-            theme=theme,
-            clear=clear,
-            code_format=code_format,
-            inline_styles=inline_styles,
-        )
+        with self._record_buffer_lock:
+            buffer_length = len(self._record_buffer)
+            html = self.export_html(
+                theme=theme,
+                clear=False,
+                code_format=code_format,
+                inline_styles=inline_styles,
+            )
         with open(path, "w", encoding="utf-8") as write_file:
             write_file.write(html)
+        if clear:
+            with self._record_buffer_lock:
+                del self._record_buffer[:buffer_length]
 
     def export_svg(
         self,
@@ -2630,16 +2640,21 @@ class Console:
             unique_id (str, optional): unique id that is used as the prefix for various elements (CSS styles, node
                 ids). If not set, this defaults to a computed value based on the recorded content.
         """
-        svg = self.export_svg(
-            title=title,
-            theme=theme,
-            clear=clear,
-            code_format=code_format,
-            font_aspect_ratio=font_aspect_ratio,
-            unique_id=unique_id,
-        )
+        with self._record_buffer_lock:
+            buffer_length = len(self._record_buffer)
+            svg = self.export_svg(
+                title=title,
+                theme=theme,
+                clear=False,
+                code_format=code_format,
+                font_aspect_ratio=font_aspect_ratio,
+                unique_id=unique_id,
+            )
         with open(path, "w", encoding="utf-8") as write_file:
             write_file.write(svg)
+        if clear:
+            with self._record_buffer_lock:
+                del self._record_buffer[:buffer_length]
 
 
 if __name__ == "__main__":  # pragma: no cover

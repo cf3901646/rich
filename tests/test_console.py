@@ -595,6 +595,36 @@ def test_save_html() -> None:
             assert html == expected
 
 
+def test_save_text_error_retains_buffer() -> None:
+    console = Console(record=True, width=100)
+    console.print("foo")
+    buffer_len = len(console._record_buffer)
+    with pytest.raises(OSError):
+        console.save_text("non_existent_directory_xyz123/file.txt")
+    assert len(console._record_buffer) == buffer_len
+    assert console.export_text(clear=False) == "foo\n"
+
+
+def test_save_html_error_retains_buffer() -> None:
+    console = Console(record=True, width=100)
+    console.print("foo")
+    buffer_len = len(console._record_buffer)
+    with pytest.raises(OSError):
+        console.save_html("non_existent_directory_xyz123/file.html")
+    assert len(console._record_buffer) == buffer_len
+    assert console.export_text(clear=False) == "foo\n"
+
+
+def test_save_svg_error_retains_buffer() -> None:
+    console = Console(record=True, width=100)
+    console.print("foo")
+    buffer_len = len(console._record_buffer)
+    with pytest.raises(OSError):
+        console.save_svg("non_existent_directory_xyz123/file.svg")
+    assert len(console._record_buffer) == buffer_len
+    assert console.export_text(clear=False) == "foo\n"
+
+
 def test_no_wrap() -> None:
     console = Console(width=10, file=io.StringIO())
     console.print("foo bar baz egg", no_wrap=True)
