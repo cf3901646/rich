@@ -397,3 +397,24 @@ def test_recursive_exception() -> None:
             console.print_exception(show_locals=True)
 
     bar()
+
+
+def test_exception_chain_cycle() -> None:
+    """Regression test for https://github.com/Textualize/rich/issues/4238
+
+    Test that cyclic exception chains via __cause__ and __context__ don't create an infinite loop.
+    """
+    console = Console()
+    error = ValueError("inner")
+    try:
+        try:
+            try:
+                raise error
+            except ValueError as exc:
+                raise RuntimeError("outer") from exc
+        except RuntimeError:
+            raise error
+    except ValueError as e:
+        trace = Traceback.extract(type(e), e, e.__traceback__)
+        assert len(trace.stacks) == 2
+        console.print_exception()

@@ -472,6 +472,9 @@ class Traceback:
         grouped_exceptions: Set[BaseException] = (
             set() if _visited_exceptions is None else _visited_exceptions
         )
+        seen_exceptions: Set[int] = (
+            {id(e) for e in _visited_exceptions} if _visited_exceptions else set()
+        )
 
         def safe_str(_object: Any) -> str:
             """Don't allow exceptions from __str__ to propagate."""
@@ -481,6 +484,7 @@ class Traceback:
                 return "<exception str() failed>"
 
         while True:
+            seen_exceptions.add(id(exc_value))
             stack = Stack(
                 exc_type=safe_str(exc_type.__name__),
                 exc_value=safe_str(exc_value),
@@ -598,7 +602,11 @@ class Traceback:
 
             if not grouped_exceptions:
                 cause = getattr(exc_value, "__cause__", None)
-                if cause is not None and cause is not exc_value:
+                if (
+                    cause is not None
+                    and cause is not exc_value
+                    and id(cause) not in seen_exceptions
+                ):
                     exc_type = cause.__class__
                     exc_value = cause
                     # __traceback__ can be None, e.g. for exceptions raised by the
@@ -608,8 +616,10 @@ class Traceback:
                     continue
 
                 cause = exc_value.__context__
-                if cause is not None and not getattr(
-                    exc_value, "__suppress_context__", False
+                if (
+                    cause is not None
+                    and not getattr(exc_value, "__suppress_context__", False)
+                    and id(cause) not in seen_exceptions
                 ):
                     exc_type = cause.__class__
                     exc_value = cause
